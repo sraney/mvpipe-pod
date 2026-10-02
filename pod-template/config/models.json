@@ -1,0 +1,65 @@
+{
+  "_comment": "The H3 model set mvpipe needs on the network volume (/workspace/models/<folder>/). 'any_of' lists acceptable file names (first is the preferred one). 'approx_gb' is used to spot partial downloads. Entries with confirmed=false have a source that is a best match, not verified against the spec's file name: check before relying on them.",
+  "files": [
+    {
+      "folder": "diffusion_models",
+      "any_of": ["minimax_h3_ref2va_pruned_int8_convrot.safetensors"],
+      "approx_gb": 20.97,
+      "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+      "confirmed": true
+    },
+    {
+      "folder": "text_encoders",
+      "any_of": ["qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors", "qwen3vl_32b_minimax_h3_int8_convrot.safetensors"],
+      "approx_gb": 15.69,
+      "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+      "confirmed": true
+    },
+    {
+      "folder": "vae",
+      "any_of": ["minimax_h3_video_vae_fp16.safetensors", "minimax_h3_video_vae_int8_convrot.safetensors"],
+      "approx_gb": 5.21,
+      "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_fp16.safetensors",
+      "confirmed": true
+    },
+    {
+      "folder": "vae",
+      "any_of": ["minimax_h3_audio_vae_fp32.safetensors"],
+      "approx_gb": 0.61,
+      "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_audio_vae_fp32.safetensors",
+      "confirmed": true
+    },
+    {
+      "folder": "loras",
+      "any_of": ["minimax_h3_ref2v_turbo_4step_v0.1_comfyui_bf16.safetensors"],
+      "approx_gb": 1.96,
+      "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/loras/minimax_h3_ref2v_turbo_4step_v0.1_comfyui_bf16.safetensors",
+      "confirmed": true
+    },
+    {
+      "folder": "latent_upscale_models",
+      "any_of": ["minimax_h3_latent_upscaler_3d_fp16.safetensors", "minimax_h3_latent_upscaler_3d_conv_v1_fp16.safetensors"],
+      "approx_gb": 0.69,
+      "url": "https://huggingface.co/LBH-123-AI/Minimax_h3_latent_Upscaler/resolve/main/minimax_h3_latent_upscaler_3d_conv_v1/minimax_h3_latent_upscaler_3d_conv_v1_fp16.safetensors",
+      "confirmed": false,
+      "note": "The spec names minimax_h3_latent_upscaler_3d_fp16.safetensors; the published file is minimax_h3_latent_upscaler_3d_conv_v1_fp16.safetensors (probably the same model renamed). Either name passes the check."
+    },
+    {
+      "folder": "loras",
+      "any_of": ["minimax_h3_lightx2v_fl2v_turbo_4step_alpha16_v0.1.safetensors", "minimax_h3_fl2v_turbo_4step_v0.1.safetensors"],
+      "approx_gb": 1.38,
+      "url": "https://huggingface.co/lightx2v/Minimax-h3-Turbo/resolve/main/minimax_h3_fl2v_turbo_4step_v0.1.safetensors",
+      "confirmed": false,
+      "note": "No file with the spec's name was found online. The closest published file is the 1.38 GB fl2v 4-step v0.1 LoRA. Copy the file from the current pod if you have it."
+    },
+    {
+      "folder": "model_patches",
+      "any_of": ["minimax_h3_fun_controlnet_union_2.0_pruned_int8_convrot.safetensors"],
+      "approx_gb": 4.53,
+      "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/model_patches/minimax_h3_fun_controlnet_union_2.0_pruned_int8_convrot.safetensors",
+      "confirmed": true,
+      "optional": true,
+      "note": "Only for the planned masked re-roll experiment. Not needed at first."
+    }
+  ]
+}
