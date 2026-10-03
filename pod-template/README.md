@@ -87,7 +87,7 @@ Environment variables:
 Open a terminal on the pod (the console's *Connect* tab, or Jupyter's terminal) and run:
 
 ```bash
-python /opt/mvpipe/scripts/verify_models.py --download
+python3 /opt/mvpipe/scripts/verify_models.py --download
 ```
 
 It downloads the confirmed files (about 44 GB) into `/workspace/models/...`, resumes if interrupted,
@@ -109,7 +109,7 @@ Then restart the pod's workers (or stop and start the pod) so ComfyUI sees the n
 ## 7. Check it works
 
 ```bash
-python /opt/mvpipe/scripts/check_nodes.py --wait 300
+python3 /opt/mvpipe/scripts/check_nodes.py --wait 300
 ```
 
 Every line should say `OK`. A `MISSING` on `MiniMaxH3AddGuide` means the ComfyUI version is too old.

@@ -18,6 +18,8 @@ done
 #    Secrets (tokens, keys) are deliberately not copied.
 printenv | grep -E '^(RUNPOD_|CUDA_|NVIDIA_|MVPIPE_)' | grep -v '^NVIDIA_REQUIRE' \
     | sed -E 's/^([^=]+)=(.*)$/export \1="\2"/' > /etc/rp_environment
+# SSH/Jupyter shells do not inherit the image's PATH: put the venv first so `python`, `pip` and ComfyUI's packages resolve.
+echo 'export PATH=/opt/venv/bin:$PATH' >> /etc/rp_environment
 chmod 600 /etc/rp_environment
 grep -qs rp_environment /root/.bashrc || echo '[ -f /etc/rp_environment ] && . /etc/rp_environment' >> /root/.bashrc
 
