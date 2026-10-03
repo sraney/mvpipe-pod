@@ -19,19 +19,35 @@ done
 printenv | grep -E '^(RUNPOD_|CUDA_|NVIDIA_|MVPIPE_)' | grep -v '^NVIDIA_REQUIRE' \
     | sed -E 's/^([^=]+)=(.*)$/export \1="\2"/' > /etc/rp_environment
 # SSH/Jupyter shells do not inherit the image's PATH: put the venv first so `python`, `pip` and ComfyUI's packages resolve.
+# Interactive shells get it through rp_environment (sourced from .bashrc). Plain remote commands
+# (`ssh host 'python ...'`) skip .bashrc, so also write /etc/environment, which sshd's PAM stack reads for every session.
 echo 'export PATH=/opt/venv/bin:$PATH' >> /etc/rp_environment
+echo 'PATH="/opt/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"' > /etc/environment
 chmod 600 /etc/rp_environment
 grep -qs rp_environment /root/.bashrc || echo '[ -f /etc/rp_environment ] && . /etc/rp_environment' >> /root/.bashrc
 
-# 2. sshd, only if a key was provided (optional fallback transport).
-if [ -n "${PUBLIC_KEY:-}" ]; then
-    mkdir -p /root/.ssh /run/sshd && chmod 700 /root/.ssh
-    grep -qxF "$PUBLIC_KEY" /root/.ssh/authorized_keys 2>/dev/null || echo "$PUBLIC_KEY" >> /root/.ssh/authorized_keys
-    chmod 600 /root/.ssh/authorized_keys
+# 2. SSH keys and sshd (optional fallback transport).
+#    Keys come from PUBLIC_KEY (one per line) and from an optional file on the volume,
+#    $WORKSPACE/mvpipe/authorized_keys (one per line, # comments allowed). A key placed in that file
+#    once is trusted by every future pod. Existing lines are never duplicated or removed.
+mkdir -p /root/.ssh /run/sshd && chmod 700 /root/.ssh
+touch /root/.ssh/authorized_keys
+add_keys() {  # reads public keys on stdin
+    local k
+    while IFS= read -r k || [ -n "$k" ]; do
+        k="${k%$'\r'}"
+        case "$k" in ''|\#*) continue;; esac
+        grep -qxF "$k" /root/.ssh/authorized_keys || echo "$k" >> /root/.ssh/authorized_keys
+    done
+}
+[ -n "${PUBLIC_KEY:-}" ] && printf '%s\n' "$PUBLIC_KEY" | add_keys
+[ -f "$WORKSPACE/mvpipe/authorized_keys" ] && add_keys < "$WORKSPACE/mvpipe/authorized_keys"
+chmod 600 /root/.ssh/authorized_keys
+if [ -s /root/.ssh/authorized_keys ]; then
     ssh-keygen -A >/dev/null 2>&1
-    /usr/sbin/sshd && log "sshd started on port 22" || log "sshd failed to start"
+    /usr/sbin/sshd && log "sshd started on port 22 ($(grep -c . /root/.ssh/authorized_keys) key(s))" || log "sshd failed to start"
 else
-    log "no PUBLIC_KEY set: sshd not started (ComfyUI over HTTPS is the main path)"
+    log "no SSH keys (PUBLIC_KEY or $WORKSPACE/mvpipe/authorized_keys): sshd not started (ComfyUI over HTTPS is the main path)"
 fi
 
 # 3. Model set check. Reports only; a missing file never stops boot.

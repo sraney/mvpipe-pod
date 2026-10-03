@@ -69,11 +69,23 @@ Environment variables:
 
 | Name | Value | Notes |
 | --- | --- | --- |
-| `PUBLIC_KEY` | your SSH public key | Optional. Without it sshd is not started. Create one with `ssh-keygen -t ed25519`, then paste the contents of `~/.ssh/id_ed25519.pub`. |
+| `PUBLIC_KEY` | your SSH public key | Optional. Without any key (here or in the volume file below) sshd is not started. Create one with `ssh-keygen -t ed25519`, then paste the contents of `~/.ssh/id_ed25519.pub`. For several keys, put one per line (the template's Raw editor accepts this). |
 | `ENABLE_JUPYTER` | `1` | Optional. Lets you browse and upload files in a browser. |
 | `JUPYTER_TOKEN` | a long random string | Used only when `ENABLE_JUPYTER=1`. If you leave it out, one is generated and saved to `/workspace/logs/jupyter_token.txt`. |
 | `HF_TOKEN` | your Hugging Face token | Optional. Only for model downloads that need a login. |
 | `COMFYUI_EXTRA_ARGS` | e.g. `--fast` | Optional extra ComfyUI flags. |
+
+### More than one SSH key (optional)
+
+If a second machine also needs to log in, add its public key once to a file on the network volume:
+
+```bash
+mkdir -p /workspace/mvpipe && echo 'ssh-ed25519 AAAA... name@machine' >> /workspace/mvpipe/authorized_keys
+```
+
+Every pod that mounts the volume trusts the keys in that file at boot (one key per line, lines starting with `#` are ignored). Keys are only ever added, never removed; delete a line from the file and from the pod's `/root/.ssh/authorized_keys` to revoke one.
+
+Remote commands also find the image's Python: `ssh <pod> 'python --version'` works the same as an interactive session.
 
 ## 5. First start
 
