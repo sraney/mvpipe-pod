@@ -23,6 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         python3 python3-venv python3-dev build-essential \
         git curl ca-certificates rsync openssh-server xz-utils procps \
         libgl1 libglib2.0-0 \
+        tree htop nano less jq unzip tmux wget ncdu \
     && rm -rf /var/lib/apt/lists/*
 
 # A current static ffmpeg (the pod's apt ffmpeg 4.4 lacks -fps_mode).
@@ -54,6 +55,10 @@ RUN set -eux; cd "$COMFYUI_DIR/custom_nodes"; \
 
 # JupyterLab is optional at run time (ENABLE_JUPYTER=1) but cheap to include.
 RUN pip install jupyterlab
+
+# nvitop: GPU monitor. It lives in the venv (the system Python refuses pip installs, PEP 668),
+# and is linked into /usr/local/bin so it works in any shell, SSH or Jupyter terminal.
+RUN pip install nvitop && ln -s /opt/venv/bin/nvitop /usr/local/bin/nvitop
 
 # Fail the build if the torch install was disturbed by a node's requirements.
 RUN python -c "import torch; print('torch', torch.__version__, 'cuda', torch.version.cuda)" \
