@@ -28,6 +28,7 @@ if [ -s /root/.ssh/authorized_keys ]; then
     /usr/sbin/sshd -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no
     echo '[mvpipe] SSH ready (keys only).'
 fi
+if [ "${INSTALL_WORKSPACE_CONTROLS:-1}" = 1 ]; then
 for action in start stop restart status; do
     target="$WORKSPACE/$action-comfyui.sh"
     if [ -f "$target" ] && ! grep -qF '/opt/mvpipe/scripts/control.py' "$target"; then
@@ -37,5 +38,6 @@ for action in start stop restart status; do
     printf '#!/usr/bin/env bash\nexec /opt/venv/bin/python /opt/mvpipe/scripts/control.py %s\n' "$action" > "$target"
     chmod +x "$target"
 done
+fi
 echo '[mvpipe] Starting one ComfyUI worker; model library: /workspace/models.'
 exec /opt/venv/bin/python /opt/mvpipe/scripts/supervise.py

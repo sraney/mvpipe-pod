@@ -68,6 +68,11 @@ Otherwise configure a RunPod registry credential with permission to read the pac
 
 ## 3. Create a separate RunPod test template
 
+Keep the existing RunPod template as the legacy/fallback template. Create the new
+template separately, with its own fixed image reference. You can switch which
+template you deploy while attaching the same network volume; two simultaneous pods
+are not required. The isolation settings below are optional for a side-by-side test.
+
 | Setting | Value |
 | --- | --- |
 | Name | `mvpipe-h3-stable-test` |
@@ -92,10 +97,11 @@ For test isolation set these environment variables:
 | --- | --- |
 | `COMFYUI_USER_DIRECTORY` | `/workspace/user-image-test` |
 | `COMFYUI_OUTPUT_DIRECTORY` | `/workspace/output/image-test` |
+| `INSTALL_WORKSPACE_CONTROLS` | `0` |
 
 The test deployment shares models but uses a separate user database and output
-directory. Its boot refreshes the convenience control scripts; run them only on the
-pod you intend to control. Keep the current pod available until validation succeeds.
+directory. The test setting also leaves existing convenience control scripts alone,
+so the current pod's controls keep working. Keep that pod available until validation succeeds.
 
 ## 4. Verify the new image
 
@@ -113,8 +119,8 @@ acceptance gate even when the build is green.
 ## 5. Promote and roll back
 
 Once the candidate passes, use that exact digest in your normal RunPod template.
-Remove the two test-isolation variables to restore `/workspace/user` and
-`/workspace/output`. Keep the previous working template and its image digest.
+Remove the three test-isolation variables to restore `/workspace/user`,
+`/workspace/output`, and installation of the new convenience controls. Keep the previous working template and its image digest.
 Do not rely on a movable `latest` tag for rollback.
 
 The new image replaces the application from its own immutable layers at every
