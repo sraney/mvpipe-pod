@@ -1,10 +1,23 @@
-# Points ComfyUI at the network volume so models survive pod restarts.
-mvpipe:
+shared_models:
   base_path: /workspace/models
+  is_default: true
+  checkpoints: checkpoints
   diffusion_models: diffusion_models
   text_encoders: text_encoders
+  clip: text_encoders
   vae: vae
   loras: loras
   latent_upscale_models: latent_upscale_models
   model_patches: model_patches
-  checkpoints: checkpoints
+  clip_vision: clip_vision
+  controlnet: controlnet
+  upscale_models: upscale_models
+  embeddings: embeddings
+  hypernetworks: hypernetworks
+  diffusers: diffusers
+  gligen: gligen
+  style_models: style_models
+  photomaker: photomaker
+  vae_approx: vae_approx
+  text_cond: text_cond
+  veda: veda
