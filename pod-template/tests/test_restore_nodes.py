@@ -32,6 +32,11 @@ class PersistentNodeTest(unittest.TestCase):
                 MODULE.restore(workspace, package, 'test')
                 active = workspace / 'comfyui-config/active-nodes/test/example-node'
                 self.assertEqual(active.resolve(), cached)
+                load_path = workspace / 'comfyui-config/load-paths/test/custom_nodes'
+                self.assertEqual((load_path / 'example-node').resolve(), cached)
+                runtime_config = (root / 'state/extra_model_paths.yaml').read_text()
+                self.assertIn(str(load_path), runtime_config)
+                self.assertEqual(load_path.name, 'custom_nodes')
                 self.assertEqual(install.call_count, 1)
                 MODULE.restore(workspace, package, 'test')
                 self.assertEqual(install.call_count, 1, 'Unchanged environment was reinstalled')
