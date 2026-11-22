@@ -3,13 +3,28 @@
 This candidate packages ComfyUI **0.46.0**, Python **3.12**, PyTorch **2.11.0+cu130**,
 and the three pinned H3 helper packages: KJNodes, VideoHelperSuite, and the H3 latent
 upscaler. The same software versions passed the included cat-and-yarn H3 test on an
-RTX PRO 6000 Blackwell. The newly built Docker image still needs its own GPU test.
+RTX PRO 6000 Blackwell. See the [current build and validation summary](BUILD_SUMMARY.md)
+for the corrected image reference and the precise scope of completed tests.
 
 The expanded revision adds native ComfyUI-Manager **4.2.2** and a persistent node
 collection. `CUSTOM_NODE_PROFILE=timeline` selects ControlNet Auxiliary, IPAdapter
 Plus, Acly Inpaint, Acly Tooling, GGUF, OBVPM Timeline, OBVPM, MiniMax H3 Turbo,
 Spectrum H3, and rgthree. `standard` selects the first five. Both retain the three
 image-owned H3 helpers.
+
+## Current candidate
+
+The compatibility-corrected candidate is published as
+`ghcr.io/sraney/mvpipe-pod:h3-timeline-compat-candidate`.
+Deploy by the immutable digest recorded in [BUILD_SUMMARY.md](BUILD_SUMMARY.md).
+This revision exposes the persistent profile through a `custom_nodes` directory
+alias so OBVPM's compatibility gate detects the loaded packages and their versions.
+The compatibility gate remains enabled; sources and models stay in place.
+
+The existing RunPod template ID can be retained when changing its image. An existing
+pod also needs its own image update or redeployment: editing the template does not
+retroactively replace that pod's image. Changes made directly under `/opt` did not
+survive the tested RunPod stop/start, so permanent startup fixes belong in the image.
 
 ## Storage and startup
 
