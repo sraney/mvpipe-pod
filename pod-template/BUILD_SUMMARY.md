@@ -112,10 +112,12 @@ ComfyUI's own frontend successfully compiled and ran a 62-node API graph; that e
 graph is saved under `/workspace/comfy-setup/validation/reference-workflow-compiled-api.json`.
 It can be submitted to ComfyUI's `/prompt` endpoint and polled through `/history`.
 
-A local client was prepared. An initial request through the public RunPod proxy
-returned HTTP 403; external API connectivity is not yet validated. An SSH tunnel is
-an alternative to investigate. This connectivity issue is separate from the node
-compatibility gate and the successful on-server API tests.
+External API connectivity is validated through an SSH tunnel bound to loopback.
+A Python client on the PC submitted the full reference API graph, polled execution
+history to success, and downloaded the resulting video through `/view` (HTTP 200).
+The public proxy permitted GET status requests but rejected POST submission with
+HTTP 403, so SSH tunneling is the default. No origin-policy or security settings
+were weakened. See [API_ACCESS.md](API_ACCESS.md) for the tunnel and reusable client.
 
 ## Deploy without changing template identity
 

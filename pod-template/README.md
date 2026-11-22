@@ -195,3 +195,8 @@ The timeline workflow is supplied by the `comfyui-obvpm-timeline` repository und
 `workflows/h3_obvpm_timeline_r2v_v0.1.4-007A.json`. Its companion and optional engine
 node packs are included in the `timeline` profile. Keep the original LBH latent
 upscaler; the incompatible Plus fork is not included.
+
+## Local application API access
+
+Use the [SSH tunnel and Python client guide](API_ACCESS.md). The client and the
+frontend-compiled reference API graph are included in `validation/`.
