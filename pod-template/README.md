@@ -60,7 +60,7 @@ do not copy the old `pod-template/github-actions-build.yml` example over it.
 
 ## 2. Build a candidate using GitHub Actions
 
-After reviewing and merging the update:
+The candidate can be built directly from the reviewed branch before merging:
 
 1. Open **Actions → build-pod-image → Run workflow**.
 2. Select the reviewed branch; use candidate tag **h3-timeline-candidate** and start the run.
@@ -124,7 +124,8 @@ so the current pod's controls keep working. Keep that pod available until valida
 3. Run it. All four model files are already on the shared model volume.
 4. Watch the saved clip and confirm the cat plays with the yarn ball without errors.
 5. Restart the test pod, then verify the image version, model discovery, saved workflow,
-   and another successful render. No package installation should run during startup.
+   and another successful render. Unchanged node sources and dependencies are reused;
+   a fresh container or changed requirements triggers a constrained dependency check.
 
 GitHub's ordinary hosted runner does not prove GPU inference works. This test is the
 acceptance gate even when the build is green.
