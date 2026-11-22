@@ -1,153 +1,122 @@
-# mvpipe pod template
+# Clean MiniMax H3 RunPod image
 
-A Docker image that turns a rented RunPod GPU into an mvpipe generation host: ComfyUI at a pinned
-release with the MiniMax H3 nodes (including *Add Guide*, which v0.30.0 lacks), the latent upscaler,
-KJNodes, VideoHelperSuite, ffmpeg 7+, one ComfyUI worker per GPU, and a boot script that reports
-what is missing instead of failing silently.
+This candidate packages ComfyUI **0.46.0**, Python **3.12**, PyTorch **2.11.0+cu130**,
+and the three pinned H3 helper packages: KJNodes, VideoHelperSuite, and the H3 latent
+upscaler. The same software versions passed the included cat-and-yarn H3 test on an
+RTX PRO 6000 Blackwell. The newly built Docker image still needs its own GPU test.
 
-What lives where:
+## Storage and startup
 
-| Place | Holds | Survives a pod restart? |
-| --- | --- | --- |
-| The image (`/opt`) | Python, torch, ComfyUI, custom nodes, ffmpeg, scripts | Rebuilt from the image every start |
-| Network volume (`/workspace`) | `models/`, `input/`, `output/`, `user/`, `logs/`, `mvpipe/` | Yes, and it bills while it exists |
-
-Pinned versions (all in the `Dockerfile` and `config/custom_nodes.txt`): ComfyUI v0.37.0, torch 2.11.0
-for CUDA 12.8 (works on Blackwell and on any host driver 570+), Python 3.12 (Ubuntu 24.04).
-
-## 1. Accounts you need
-
-- **RunPod** with credit added.
-- **A place to host the image**, either Docker Hub or GitHub (free). RunPod pulls the image from there.
-- Optional: a **Hugging Face token** (only if a model download asks for a login).
-
-## 2. Build and publish the image (once, and again whenever you change a pin)
-
-### Option A: on your own PC (needs Docker; about 10 GB of disk, 20+ minutes)
-
-```bash
-cd pod-template
-docker build -t YOURNAME/mvpipe-pod:latest .
-docker login
-docker push YOURNAME/mvpipe-pod:latest
-```
-
-On Windows, install Docker Desktop first and run these in PowerShell. Replace `YOURNAME` with your
-Docker Hub user name. The push is large (several GB), so use a wired connection.
-
-### Option B: let GitHub build it (no Docker on your PC)
-
-1. Create a GitHub repo and upload the `pod-template/` folder.
-2. Copy `github-actions-build.yml` to `.github/workflows/build-pod-image.yml` in that repo.
-3. Actions tab, *build-pod-image*, **Run workflow**. The image appears as `ghcr.io/YOURNAME/mvpipe-pod:latest`.
-4. Package settings: set the package to **Public** so RunPod can pull it without a login.
-
-## 3. Create the network volume
-
-RunPod console, *Storage*, *New Network Volume*.
-
-- **Datacenter**: choose one that offers your GPU (RTX PRO 6000 or similar, 96 GB). The volume
-  can only attach to pods in the same datacenter, so check GPU availability first.
-- **Size**: 100 GB minimum (the H3 set is about 45 GB, plus outputs and LoRAs). 150 GB leaves room.
-
-## 4. Create the pod template
-
-RunPod console, *Templates*, *New Template*. Field names can differ slightly from this list.
-
-| Field | Value |
+| Location | Contents |
 | --- | --- |
-| Name | `mvpipe-comfyui` |
-| Container image | `YOURNAME/mvpipe-pod:latest` (or the `ghcr.io/...` name) |
+| `/opt/ComfyUI` | Image-owned application and custom nodes |
+| `/opt/venv` | Image-owned Python environment |
+| `/workspace/models` | Existing shared model library |
+| `/workspace/user` | Persistent workflows and settings |
+| `/workspace/input`, `/workspace/output` | Persistent media |
+| `/workspace/logs` | Runtime logs |
+| `/tmp/comfyui`, `/run/mvpipe` | Disposable temporary files and process state |
+
+One supervisor owns one ComfyUI process. The volume's start/stop/restart/status scripts
+are routed to that supervisor on boot; previous scripts are backed up once. Stopping
+or restarting refuses while work is active or queued. A stopped worker stays stopped
+until started; restarting the container starts a new worker normally.
+
+No packages, git updates, model downloads, or output deletions occur at boot.
+Models are excluded from the image. Keep the existing network volume.
+This minimal image does not include JupyterLab, the transport agent, an idle-stop
+watchdog, or the older multi-GPU worker arrangement. If those services are required,
+add and validate them explicitly before replacing the existing deployment.
+
+## 1. Upload the prepared update using GitHub
+
+1. Open `sraney/mvpipe-pod` and select the branch menu, currently `main`.
+2. Create a branch named `h3-stable-image` from `main`.
+3. Extract the supplied update ZIP on your computer. Inside is `mvpipe-pod-update`.
+4. On your new GitHub branch, choose **Add file → Upload files**.
+5. Drag the **contents** of `mvpipe-pod-update` into the upload area, including
+   `.github`, `pod-template`, and `.gitattributes`. Do not upload the ZIP itself or its
+   enclosing directory. The files must replace the matching repository paths.
+6. Check that the proposed paths include `.github/workflows/build-pod-image.yml`
+   and `pod-template/Dockerfile`, then commit to `h3-stable-image`.
+7. Open a pull request for review. Its build checks do not publish an image.
+
+The prepared update only includes changed/new files. Existing files not included
+in the ZIP remain in the repository. The active workflow is the file under `.github`;
+do not copy the old `pod-template/github-actions-build.yml` example over it.
+
+## 2. Build a candidate using GitHub Actions
+
+After reviewing and merging the update:
+
+1. Open **Actions → build-pod-image → Run workflow**.
+2. Select `main`; use candidate tag **h3-stable-candidate** and start the run.
+3. Wait for all steps to pass. The workflow checks process controls, builds Linux amd64,
+   checks Python dependencies, and performs CPU-only ComfyUI startup before publishing.
+4. Read the run summary. It lists the candidate tag, source revision tag, and image digest.
+   The candidate will be `ghcr.io/sraney/mvpipe-pod:h3-stable-candidate`.
+5. Copy the immutable `ghcr.io/sraney/mvpipe-pod@sha256:...` reference for deployment.
+
+The workflow never overwrites `latest`. If the runner runs out of disk, use a larger
+GitHub runner rather than dropping checks or downloading dependencies at pod boot.
+
+Publishing uses GitHub's built-in workflow token. In repository **Settings → Actions →
+General**, ensure Actions are enabled and permitted to publish packages. Existing
+package **Manage Actions access** must allow this repository write access if needed.
+For unauthenticated RunPod pulls, set the container package visibility to Public.
+Otherwise configure a RunPod registry credential with permission to read the package.
+
+## 3. Create a separate RunPod test template
+
+| Setting | Value |
+| --- | --- |
+| Name | `mvpipe-h3-stable-test` |
+| Container image | Digest copied from the successful GitHub run |
 | Container disk | 60 GB |
-| Volume disk | 0 (you attach the network volume when deploying) |
 | Volume mount path | `/workspace` |
-| Expose HTTP ports | `8188, 8189, 8190, 8191, 8888` (8189+ are the extra GPUs' workers) |
-| Expose TCP ports | `22` |
-| Container start command | leave empty (the image starts `/start.sh`) |
+| HTTP ports | `8188` |
+| TCP ports | `22` |
+| Container start command | Empty; use the image default |
+| GPU count | One |
 
-Environment variables:
+Use a host/driver compatible with CUDA 13.0. The live Blackwell pod's driver was
+verified with this runtime; do not assume every available RunPod host matches it.
+Deploy in the data center containing your **existing network volume**, and attach
+that volume. Do not create an empty replacement volume or download the models again.
 
-| Name | Value | Notes |
-| --- | --- | --- |
-| `PUBLIC_KEY` | your SSH public key | Optional. Without any key (here or in the volume file below) sshd is not started. Create one with `ssh-keygen -t ed25519`, then paste the contents of `~/.ssh/id_ed25519.pub`. For several keys, put one per line (the template's Raw editor accepts this). |
-| `ENABLE_JUPYTER` | `1` | Optional. Lets you browse and upload files in a browser. |
-| `JUPYTER_TOKEN` | a long random string | Used only when `ENABLE_JUPYTER=1`. If you leave it out, one is generated and saved to `/workspace/logs/jupyter_token.txt`. |
-| `HF_TOKEN` | your Hugging Face token | Optional. Only for model downloads that need a login. |
-| `COMFYUI_EXTRA_ARGS` | e.g. `--fast` | Optional extra ComfyUI flags. |
+Set **PUBLIC_KEY** to your existing SSH public key. Never upload its private key.
+Alternatively, the image reads public keys from `/workspace/mvpipe/authorized_keys`.
+For test isolation set these environment variables:
 
-### More than one SSH key (optional)
-
-If a second machine also needs to log in, add its public key once to a file on the network volume:
-
-```bash
-mkdir -p /workspace/mvpipe && echo 'ssh-ed25519 AAAA... name@machine' >> /workspace/mvpipe/authorized_keys
-```
-
-Every pod that mounts the volume trusts the keys in that file at boot (one key per line, lines starting with `#` are ignored). Keys are only ever added, never removed; delete a line from the file and from the pod's `/root/.ssh/authorized_keys` to revoke one.
-
-Remote commands also find the image's Python: `ssh <pod> 'python --version'` works the same as an interactive session.
-
-## 5. First start
-
-1. *Pods*, **Deploy**, pick the GPU, tick **Network Volume** and choose yours, pick `mvpipe-comfyui`.
-2. Open the pod's **Logs**. You should see `[mvpipe-boot]` lines: sshd (or "not started"), a
-   `[models]` report, then `worker 0 starting on port 8188`.
-3. The first boot has no models yet, so the report lists them as MISSING. That is expected.
-
-## 6. Put the models on the volume
-
-Open a terminal on the pod (the console's *Connect* tab, or Jupyter's terminal) and run:
-
-```bash
-python3 /opt/mvpipe/scripts/verify_models.py --download
-```
-
-It downloads the confirmed files (about 44 GB) into `/workspace/models/...`, resumes if interrupted,
-and prints the report again. Tip: download on a cheap pod instead of the GPU pod to save money. Any
-pod attached to the same volume works, since the script needs only Python.
-
-Two files are marked *source not confirmed*, so they are skipped by default:
-
-- the **latent upscaler**: the spec's file name was not found online; the published file is
-  `minimax_h3_latent_upscaler_3d_conv_v1_fp16.safetensors` (probably the same model);
-- the **lightx2v LoRA**: no file with the spec's name was found; the closest is the 1.38 GB
-  `minimax_h3_fl2v_turbo_4step_v0.1.safetensors`.
-
-If you have the originals on your current pod, copy them to `/workspace/models/latent_upscale_models/`
-and `/workspace/models/loras/`. Otherwise add `--unconfirmed` to fetch the closest matches and test them.
-
-Then restart the pod's workers (or stop and start the pod) so ComfyUI sees the new files.
-
-## 7. Check it works
-
-```bash
-python3 /opt/mvpipe/scripts/check_nodes.py --wait 300
-```
-
-Every line should say `OK`. A `MISSING` on `MiniMaxH3AddGuide` means the ComfyUI version is too old.
-The pod's address for mvpipe is `https://<POD_ID>-8188.proxy.runpod.net` (the pod ID is on the pod's
-page); the second GPU is the same address with `-8189`.
-
-## 8. Day to day
-
-- **Stop the pod** when you are not generating. You pay for the GPU while it runs, and for the
-  volume while it exists. Stopping the pod keeps the volume.
-- The first job after a restart is slow (7-15 minutes of model loading). That is normal.
-- Logs: `/workspace/logs/comfyui-gpu0.log` (and `-gpu1`, ...), `model_check.json`, `pod_agent.log`.
-- To update a pin: edit `Dockerfile` or `config/custom_nodes.txt`, rebuild, push, redeploy.
-
-## Troubleshooting
-
-| Symptom | Likely cause |
+| Variable | Value |
 | --- | --- |
-| Pod starts but `8188` link gives a 502 | ComfyUI is still starting; read `comfyui-gpu0.log`. Wait a few minutes. |
-| Only one ComfyUI port works on a 2-GPU pod | Ports `8189+` are missing from the template's HTTP port list. |
-| `CUDA error: no kernel image` | Image built for the wrong CUDA; keep `cu128` (or newer) torch for Blackwell. |
-| Worker restarts every 5 s | Read the end of its log; usually a bad custom node or a missing model. |
-| Out-of-memory loading the model | The GPU is below 96 GB; this is the open VRAM question in the spec. |
+| `COMFYUI_USER_DIRECTORY` | `/workspace/user-image-test` |
+| `COMFYUI_OUTPUT_DIRECTORY` | `/workspace/output/image-test` |
 
-## Not verified yet
+The test deployment shares models but uses a separate user database and output
+directory. Its boot refreshes the convenience control scripts; run them only on the
+pod you intend to control. Keep the current pod available until validation succeeds.
 
-- A real generation on a GPU. The image has been built and ComfyUI checked for the H3 nodes, but no take has been rendered with it.
-- The exact RunPod console field names, which change over time.
-- Whether the two "source not confirmed" files are the ones your workflow expects.
+## 4. Verify the new image
+
+1. Open RunPod's ComfyUI connection on port 8188. Check the pod logs for startup,
+   and `/workspace/logs/comfyui-gpu0.log` for detailed execution logs.
+2. Load `validation/cat-yarn-workflow.json` from this repository in ComfyUI.
+3. Run it. All four model files are already on the shared model volume.
+4. Watch the saved clip and confirm the cat plays with the yarn ball without errors.
+5. Restart the test pod, then verify the image version, model discovery, saved workflow,
+   and another successful render. No package installation should run during startup.
+
+GitHub's ordinary hosted runner does not prove GPU inference works. This test is the
+acceptance gate even when the build is green.
+
+## 5. Promote and roll back
+
+Once the candidate passes, use that exact digest in your normal RunPod template.
+Remove the two test-isolation variables to restore `/workspace/user` and
+`/workspace/output`. Keep the previous working template and its image digest.
+Do not rely on a movable `latest` tag for rollback.
+
+The new image replaces the application from its own immutable layers at every
+container start. Models, workflows, and user data remain on the network volume.
+Do not delete older persistent installs until their remaining useful files are inventoried.
