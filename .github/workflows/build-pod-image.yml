@@ -6,7 +6,7 @@ on:
       image_tag:
         description: Candidate tag (the current latest image is never overwritten)
         required: true
-        default: h3-stable-candidate
+        default: h3-timeline-candidate
         type: string
   pull_request:
     paths:
@@ -76,7 +76,7 @@ jobs:
         run: |
           docker run --rm --entrypoint /opt/venv/bin/python "$IMAGE" -m pip check
           docker run --rm --entrypoint /bin/bash "$IMAGE" -n /start.sh
-          docker run --rm --entrypoint /opt/venv/bin/python "$IMAGE" /opt/ComfyUI/main.py --cpu --quick-test-for-ci
+          docker run --rm --entrypoint /bin/bash "$IMAGE" /opt/mvpipe/scripts/verify_image.sh
       - name: Publish checked candidate
         if: github.event_name == 'workflow_dispatch'
         env:
