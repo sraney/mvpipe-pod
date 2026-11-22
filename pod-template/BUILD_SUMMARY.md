@@ -54,9 +54,9 @@ CUDA 13.0 image. Validation used one RTX PRO 6000 Blackwell with 96 GB VRAM.
 
 ## Completed GPU integration checks
 
-These results distinguish the previously deployed image from the live environment
-with the corrected startup mapping. They do not claim the new digest has already
-passed all deployment checks.
+These results distinguish the original candidate, its temporary live mapping fix,
+and the corrected image deployed from its published digest. The corrected image
+now passes reference generation and full pod stop/start recovery checks.
 
 | Check | Result |
 | --- | --- |
@@ -69,8 +69,8 @@ passed all deployment checks.
 | Large supplied reference workflow, generation path | Passed after applying the corrected mapping live; compatibility gate enabled, reference image supplied, preview bypassed |
 | Full pod stop/start, persistent models and workflows | Preserved |
 | Temporary application-file patch after full pod stop/start | Lost; this triggered the corrected image build |
-| Corrected digest, fresh deployment and GPU rerun | Pending confirmation after deployment |
-| Corrected digest, full pod stop/start and rerun | Pending |
+| Corrected digest, fresh deployment and GPU rerun | Passed: full reference generation path, 124 frames, about 5.17 seconds; 212.79 seconds including cold model loading |
+| Corrected digest, full pod stop/start | Passed: startup script, workflow and checked model fingerprints preserved; corrected load path restored; all ten node packs registered; compatibility gate rerun passed. GPU sampling was not repeated after this final stop/start. |
 
 The large reference workflow's successful generation test does not cover every
 optional branch, upscale/refine configuration, Turbo preset, or custom-node feature.
