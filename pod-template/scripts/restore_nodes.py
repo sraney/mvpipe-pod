@@ -107,7 +107,12 @@ def restore(workspace, package, profile, snapshot=False):
     runtime = Path(os.environ.get('COMFYUI_CONTROL_ROOT', '/run/mvpipe'))
     runtime.mkdir(parents=True, exist_ok=True)
     config = (package / 'extra_model_paths.yaml').read_text()
-    config += '\npersistent_nodes:\n  is_default: true\n  custom_nodes: ' + json.dumps(str(active)) + '\n'
+    # Some node-pack compatibility checks identify loaded packs by this basename.
+    load_path = settings / 'load-paths' / profile / 'custom_nodes'
+    load_path.parent.mkdir(parents=True, exist_ok=True)
+    if not load_path.exists():
+        load_path.symlink_to(active, target_is_directory=True)
+    config += '\npersistent_nodes:\n  is_default: true\n  custom_nodes: ' + json.dumps(str(load_path)) + '\n'
     (runtime / 'extra_model_paths.yaml').write_text(config)
     report = {'profile': profile, 'node_revisions': revisions, 'install_scripts_requiring_review': installer_notes}
     (workspace / 'logs/custom-node-restore.json').write_text(json.dumps(report, indent=2))
