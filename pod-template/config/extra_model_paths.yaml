@@ -21,3 +21,5 @@ shared_models:
   vae_approx: vae_approx
   text_cond: text_cond
   veda: veda
+  ipadapter: ipadapter
+  inpaint: inpaint
