@@ -5,6 +5,12 @@ and the three pinned H3 helper packages: KJNodes, VideoHelperSuite, and the H3 l
 upscaler. The same software versions passed the included cat-and-yarn H3 test on an
 RTX PRO 6000 Blackwell. The newly built Docker image still needs its own GPU test.
 
+The expanded revision adds native ComfyUI-Manager **4.2.2** and a persistent node
+collection. `CUSTOM_NODE_PROFILE=timeline` selects ControlNet Auxiliary, IPAdapter
+Plus, Acly Inpaint, Acly Tooling, GGUF, OBVPM Timeline, OBVPM, MiniMax H3 Turbo,
+Spectrum H3, and rgthree. `standard` selects the first five. Both retain the three
+image-owned H3 helpers.
+
 ## Storage and startup
 
 | Location | Contents |
@@ -15,6 +21,8 @@ RTX PRO 6000 Blackwell. The newly built Docker image still needs its own GPU tes
 | `/workspace/user` | Persistent workflows and settings |
 | `/workspace/input`, `/workspace/output` | Persistent media |
 | `/workspace/logs` | Runtime logs |
+| `/workspace/custom_nodes` | Persistent optional-node source repositories |
+| `/workspace/comfyui-config` | Profiles, active-node links, dependency state, and snapshots |
 | `/tmp/comfyui`, `/run/mvpipe` | Disposable temporary files and process state |
 
 One supervisor owns one ComfyUI process. The volume's start/stop/restart/status scripts
@@ -22,8 +30,13 @@ are routed to that supervisor on boot; previous scripts are backed up once. Stop
 or restarting refuses while work is active or queued. A stopped worker stays stopped
 until started; restarting the container starts a new worker normally.
 
-No packages, git updates, model downloads, or output deletions occur at boot.
-Models are excluded from the image. Keep the existing network volume.
+Core packages and ComfyUI stay pinned in the image. Optional repositories are cloned
+at their seed commits on first use, then reused from the volume. Existing revisions
+are preserved, including Manager updates. Python dependencies are restored when the
+requirements or environment change, subject to tested dependency constraints.
+Conflicts require a tested image update instead of silently replacing core packages.
+No model downloads or output deletions occur at boot. Models are excluded from the
+image. Keep the existing network volume.
 This minimal image does not include JupyterLab, the transport agent, an idle-stop
 watchdog, or the older multi-GPU worker arrangement. If those services are required,
 add and validate them explicitly before replacing the existing deployment.
@@ -50,11 +63,11 @@ do not copy the old `pod-template/github-actions-build.yml` example over it.
 After reviewing and merging the update:
 
 1. Open **Actions → build-pod-image → Run workflow**.
-2. Select `main`; use candidate tag **h3-stable-candidate** and start the run.
+2. Select the reviewed branch; use candidate tag **h3-timeline-candidate** and start the run.
 3. Wait for all steps to pass. The workflow checks process controls, builds Linux amd64,
    checks Python dependencies, and performs CPU-only ComfyUI startup before publishing.
 4. Read the run summary. It lists the candidate tag, source revision tag, and image digest.
-   The candidate will be `ghcr.io/sraney/mvpipe-pod:h3-stable-candidate`.
+   The expanded candidate will be `ghcr.io/sraney/mvpipe-pod:h3-timeline-candidate`.
 5. Copy the immutable `ghcr.io/sraney/mvpipe-pod@sha256:...` reference for deployment.
 
 The workflow never overwrites `latest`. If the runner runs out of disk, use a larger
@@ -126,3 +139,43 @@ Do not rely on a movable `latest` tag for rollback.
 The new image replaces the application from its own immutable layers at every
 container start. Models, workflows, and user data remain on the network volume.
 Do not delete older persistent installs until their remaining useful files are inventoried.
+
+## Persistent nodes and updates
+
+The selected profile is seeded once into `/workspace/comfyui-config/profiles/`.
+Edit its `enabled` fields to select packages, or switch `CUSTOM_NODE_PROFILE`
+between `standard` and `timeline` in the template. Repositories live in
+`/workspace/custom_nodes`; the active profile contains persistent links to them.
+Manager installs into the active persistent directory. Disabling a node in Manager
+is respected on subsequent boots. Existing profile edits and repository commits
+are never overwritten by boot-time git pulls.
+
+Before updating nodes, use `/workspace/snapshot-comfyui.sh` to record their current
+commits, Python package list, and profile. Manager can then update the optional-node
+repositories. A later container restores their Python dependencies subject to the
+image's constraints. Node-specific `install.py` scripts are reported for review;
+system tools and core-package changes belong in a new tested image.
+
+For a core ComfyUI update, change the image's release commit and dependency lock,
+build a new candidate, run the H3 test, and update only the new template's image
+reference. Manager's changes to image-owned ComfyUI or the three baked-in helpers
+would be disposable, so maintain those pins through GitHub.
+
+Manager retains its upstream listener/security policy. Some install/update UI
+actions may require private/loopback access rather than a public listener. This
+image does not weaken that policy. Startup restoration runs locally before the
+server starts and does not depend on public Manager write endpoints.
+
+Acly Tooling's optional translation dependency is not installed; its other nodes
+load without it. GGUF imports alongside H3, but its loader's supported architecture
+list does not include MiniMax H3. Use the existing native H3 loader for H3 weights.
+
+IPAdapter and Inpaint model categories also point into `/workspace/models`.
+ControlNet annotator weights use `/workspace/models/annotators`. These image nodes
+may need their own model files for particular workflows; the staged model list in
+this task covers the H3 timeline workflow specifically.
+
+The timeline workflow is supplied by the `comfyui-obvpm-timeline` repository under
+`workflows/h3_obvpm_timeline_r2v_v0.1.4-007A.json`. Its companion and optional engine
+node packs are included in the `timeline` profile. Keep the original LBH latent
+upscaler; the incompatible Plus fork is not included.

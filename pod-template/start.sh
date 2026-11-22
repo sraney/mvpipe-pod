@@ -39,5 +39,10 @@ for action in start stop restart status; do
     chmod +x "$target"
 done
 fi
+printf '#!/usr/bin/env bash\nexport WORKSPACE=%q CUSTOM_NODE_PROFILE=%q\nexec /opt/venv/bin/python /opt/mvpipe/scripts/restore_nodes.py --snapshot\n' \
+    "$WORKSPACE" "${CUSTOM_NODE_PROFILE:-timeline}" > "$WORKSPACE/snapshot-comfyui.sh"
+chmod +x "$WORKSPACE/snapshot-comfyui.sh"
+python /opt/mvpipe/scripts/restore_nodes.py 2>&1 | tee "$WORKSPACE/logs/custom-node-restore.log"
+export COMFYUI_EXTRA_MODEL_PATHS_CONFIG=/run/mvpipe/extra_model_paths.yaml
 echo '[mvpipe] Starting one ComfyUI worker; model library: /workspace/models.'
 exec /opt/venv/bin/python /opt/mvpipe/scripts/supervise.py
