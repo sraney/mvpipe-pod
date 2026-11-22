@@ -29,10 +29,12 @@ def main():
         directory.mkdir(parents=True, exist_ok=True)
     command = [sys.executable, str(CODE / 'main.py'), '--listen', os.environ.get('COMFYUI_LISTEN', '0.0.0.0'),
                '--port', os.environ.get('COMFYUI_PORT', '8188'), '--extra-model-paths-config',
-               '/opt/mvpipe/extra_model_paths.yaml', '--input-directory', str(WORKSPACE / 'input'),
+               os.environ.get('COMFYUI_EXTRA_MODEL_PATHS_CONFIG', '/opt/mvpipe/extra_model_paths.yaml'), '--input-directory', str(WORKSPACE / 'input'),
                '--output-directory', str(output), '--user-directory', str(user),
                '--temp-directory', '/tmp/comfyui', '--disable-auto-launch']
     command += shlex.split(os.environ.get('COMFYUI_EXTRA_ARGS', ''))
+    if os.environ.get('ENABLE_MANAGER', '1') == '1':
+        command.append('--enable-manager')
     child = None
     stopping = False
 
