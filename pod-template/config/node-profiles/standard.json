@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "nodes": [
+    {
+      "name": "comfyui_controlnet_aux",
+      "url": "https://github.com/Fannovel16/comfyui_controlnet_aux",
+      "commit": "c2655d2970d810d8a3d71deed204cdf416b66132",
+      "enabled": true,
+      "install_requirements": true
+    },
+    {
+      "name": "ComfyUI_IPAdapter_plus",
+      "url": "https://github.com/cubiq/ComfyUI_IPAdapter_plus",
+      "commit": "a0f451a5113cf9becb0847b92884cb10cbdec0ef",
+      "enabled": true,
+      "install_requirements": true
+    },
+    {
+      "name": "comfyui-inpaint-nodes",
+      "url": "https://github.com/Acly/comfyui-inpaint-nodes",
+      "commit": "5b7681746fe19e563113d27366ba85236bc1ba5b",
+      "enabled": true,
+      "install_requirements": true
+    },
+    {
+      "name": "comfyui-tooling-nodes",
+      "url": "https://github.com/Acly/comfyui-tooling-nodes",
+      "commit": "77f0952c49ab7e907de46f7d9d05cdce03fdc750",
+      "enabled": true,
+      "install_requirements": false
+    },
+    {
+      "name": "ComfyUI-GGUF",
+      "url": "https://github.com/city96/ComfyUI-GGUF",
+      "commit": "6ea2651e7df66d7585f6ffee804b20e92fb38b8a",
+      "enabled": true,
+      "install_requirements": true
+    }
+  ]
+}

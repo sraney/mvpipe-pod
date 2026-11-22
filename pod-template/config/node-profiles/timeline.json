@@ -1,0 +1,75 @@
+{
+  "schema": 1,
+  "nodes": [
+    {
+      "name": "comfyui_controlnet_aux",
+      "url": "https://github.com/Fannovel16/comfyui_controlnet_aux",
+      "commit": "c2655d2970d810d8a3d71deed204cdf416b66132",
+      "enabled": true,
+      "install_requirements": true
+    },
+    {
+      "name": "ComfyUI_IPAdapter_plus",
+      "url": "https://github.com/cubiq/ComfyUI_IPAdapter_plus",
+      "commit": "a0f451a5113cf9becb0847b92884cb10cbdec0ef",
+      "enabled": true,
+      "install_requirements": true
+    },
+    {
+      "name": "comfyui-inpaint-nodes",
+      "url": "https://github.com/Acly/comfyui-inpaint-nodes",
+      "commit": "5b7681746fe19e563113d27366ba85236bc1ba5b",
+      "enabled": true,
+      "install_requirements": true
+    },
+    {
+      "name": "comfyui-tooling-nodes",
+      "url": "https://github.com/Acly/comfyui-tooling-nodes",
+      "commit": "77f0952c49ab7e907de46f7d9d05cdce03fdc750",
+      "enabled": true,
+      "install_requirements": false
+    },
+    {
+      "name": "ComfyUI-GGUF",
+      "url": "https://github.com/city96/ComfyUI-GGUF",
+      "commit": "6ea2651e7df66d7585f6ffee804b20e92fb38b8a",
+      "enabled": true,
+      "install_requirements": true
+    },
+    {
+      "name": "comfyui-obvpm-timeline",
+      "url": "https://github.com/chanon/comfyui-obvpm-timeline",
+      "commit": "068a97b4786daef8d67277fe323297fb86d54a3f",
+      "enabled": true,
+      "install_requirements": true
+    },
+    {
+      "name": "comfyui-obvpm",
+      "url": "https://github.com/chanon/comfyui-obvpm",
+      "commit": "baf0aa8f3cd220b1b882e91a7145e96d1af90300",
+      "enabled": true,
+      "install_requirements": true
+    },
+    {
+      "name": "ComfyUI-MiniMax-H3-Turbo",
+      "url": "https://github.com/Larryvrh/ComfyUI-MiniMax-H3-Turbo",
+      "commit": "4274783a23afcfdbea3b4876cb79effd6c510785",
+      "enabled": true,
+      "install_requirements": true
+    },
+    {
+      "name": "ComfyUI-Spectrum-MiniMax-H3",
+      "url": "https://github.com/xmarre/ComfyUI-Spectrum-MiniMax-H3",
+      "commit": "7df883bb2361b7884ad789e97effd1dc37c8963a",
+      "enabled": true,
+      "install_requirements": true
+    },
+    {
+      "name": "rgthree-comfy",
+      "url": "https://github.com/rgthree/rgthree-comfy",
+      "commit": "bc48c6aaeca87bedbc14245d89f9bc6be37a630e",
+      "enabled": true,
+      "install_requirements": true
+    }
+  ]
+}
